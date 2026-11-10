@@ -140,6 +140,23 @@ Debe visualizar:
 5. **Verificación de Métricas:**
    - Observar los contadores de **Latencia de Tránsito (LAN)** (< 50 ms), **Tiempo de Inferencia** (~43 ms) y **Throughput/FPS**.
 
+#### 📱 Pruebas desde Smartphone / Dispositivo Móvil (Red LAN)
+Al acceder desde un teléfono conectado al mismo WiFi (`http://<IP_LOCAL>:8000`), los navegadores móviles restringen por estándar W3C el acceso a la cámara continua en páginas HTTP no cifradas fuera de localhost. El sistema incluye dos mecanismos optimizados:
+
+- **Opción A (Inmediata y sin configurar nada - Foto / Galería):**
+  - Pulsa el botón verde **"📸 Subir Foto / Captura"**.
+  - Puedes seleccionar una foto de tu galería o tomar una foto rápida.
+  - **Protección contra caídas de memoria:** El navegador redimensiona y comprime automáticamente la imagen a un máximo de $640\text{ px}$ en memoria (< 40 KB) antes de enviarla, previniendo el error nativo de Android (*"Unable to proceed due to low memory"*) causado por fotos de 48/64 MP.
+
+- **Opción B (Streaming Continuo de Video en Vivo en Chrome Android):**
+  - Para habilitar la transmisión continua de video en vivo directamente dentro de la página web (usando solo ~8 MB de RAM sin abrir la app pesada de la cámara):
+    1. En Chrome en el celular, abre una pestaña e ingresa a:
+       `chrome://flags/#unsafely-treat-insecure-origin-as-secure`
+    2. Cambia la opción a **Enabled**.
+    3. En el cuadro de texto añade la URL de tu servidor (ej. `http://192.168.108.164:8000`).
+    4. Pulsa el botón azul **Relaunch** para reiniciar Chrome.
+    5. Vuelve a ingresar a la web y pulsa **"Iniciar Cámara"**: transmitirá video continuo en tiempo real con latencia menor a 50 ms.
+
 ---
 
 ### Paso 4: Probar el Dashboard de Alertas en Node-RED

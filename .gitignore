@@ -38,6 +38,8 @@ wheels/
 # Variables de entorno sensibles (Se entregan empaquetadas en ZIP)
 .env
 backend/.env
+*.zip
+env_files.zip
 
 # Dataset local (se preservan marcadores de estructura)
 backend/ml/dataset/con_corbata/*
