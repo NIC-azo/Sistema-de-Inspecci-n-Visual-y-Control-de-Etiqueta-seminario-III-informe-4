@@ -210,10 +210,19 @@
         <canvas id="captureCanvas" style="display: none;"></canvas>
       </div>
 
+      <div id="mobileNotice" class="notice" style="display: none; background: rgba(245, 158, 11, 0.15); border-left-color: #f59e0b; color: #fbbf24; margin-top: 0.75rem;">
+        <strong>⚠️ Nota para Celulares (Navegación HTTP en LAN):</strong><br>
+        Los navegadores móviles requieren contexto seguro para streaming continuo. Puedes:<br>
+        1. <strong>Opción directa (sin configurar nada):</strong> Pulsa el botón verde <strong>"📸 Tomar Foto Móvil"</strong>.<br>
+        2. <strong>Para streaming en vivo en Chrome Android:</strong> Abre <code style="background:#0f172a; padding:2px 4px; border-radius:4px;">chrome://flags/#unsafely-treat-insecure-origin-as-secure</code>, habilítala, añade <strong id="currentHostCode"></strong> y pulsa <em>Relaunch</em>.
+      </div>
+
       <div class="controls">
         <button id="btnStart" class="btn-primary" onclick="startCamera()">Iniciar Cámara</button>
         <button id="btnStop" class="btn-outline" onclick="stopCamera()" disabled>Detener</button>
         <button class="btn-outline" onclick="switchCamera()">Cambiar Cámara</button>
+        <input type="file" id="mobileCameraInput" accept="image/*" style="display: none;" onchange="handleMobileCapture(event)">
+        <button id="btnMobileSnap" class="btn-success" onclick="document.getElementById('mobileCameraInput').click()">📸 Subir Foto / Captura</button>
       </div>
 
       <div class="notice">
@@ -287,8 +296,21 @@
     const cameraStatus = document.getElementById('cameraStatus');
     const feedback = document.getElementById('captureFeedback');
     const linkNodeRed = document.getElementById('linkNodeRed');
+    const mobileNotice = document.getElementById('mobileNotice');
+    const currentHostCode = document.getElementById('currentHostCode');
+
     if (linkNodeRed) {
       linkNodeRed.href = `http://${window.location.hostname}:1880/ui`;
+    }
+
+    // Detección proactiva de contexto seguro en navegadores móviles
+    if (!window.isSecureContext && window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+      if (mobileNotice) {
+        mobileNotice.style.display = 'block';
+      }
+      if (currentHostCode) {
+        currentHostCode.textContent = `${window.location.protocol}//${window.location.host}`;
+      }
     }
 
     function connectWebSocket() {
@@ -320,6 +342,12 @@
     }
 
     async function startCamera() {
+      if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+        if (mobileNotice) mobileNotice.style.display = 'block';
+        alert("En celulares conectados por HTTP, el navegador bloquea el streaming continuo por seguridad.\n\nPuedes usar el botón verde 'Tomar Foto Móvil' para probarlo de inmediato, o habilitar la bandera chrome://flags siguiendo las instrucciones en pantalla.");
+        return;
+      }
+
       try {
         localStream = await navigator.mediaDevices.getUserMedia({
           video: {
@@ -347,6 +375,66 @@
       } catch (err) {
         alert("Error accediendo a la cámara: " + err.message);
       }
+    }
+
+    async function handleMobileCapture(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      cameraStatus.textContent = 'Comprimiendo imagen...';
+      cameraStatus.style.background = '#2563eb';
+
+      // Redimensionar del lado del cliente a máx 640px para evitar saturar la RAM móvil
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = async () => {
+          const maxDim = 640;
+          let w = img.width;
+          let h = img.height;
+          if (w > maxDim || h > maxDim) {
+            if (w > h) {
+              h = Math.round((h * maxDim) / w);
+              w = maxDim;
+            } else {
+              w = Math.round((w * maxDim) / h);
+              h = maxDim;
+            }
+          }
+
+          const offCanvas = document.createElement('canvas');
+          offCanvas.width = w;
+          offCanvas.height = h;
+          const offCtx = offCanvas.getContext('2d');
+          offCtx.drawImage(img, 0, 0, w, h);
+
+          const compressedBase64 = offCanvas.toDataURL('image/jpeg', 0.65);
+          cameraStatus.textContent = 'Analizando...';
+
+          const t0 = performance.now();
+          try {
+            const res = await fetch('/api/frame', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                image: compressedBase64,
+                client_timestamp: Date.now()
+              })
+            });
+            const data = await res.json();
+            const trueLatency = Math.round(performance.now() - t0);
+            updateDashboard(data, trueLatency);
+            cameraStatus.textContent = 'Procesado';
+            cameraStatus.style.background = '#15803d';
+          } catch (err) {
+            alert("Error: " + err.message);
+            cameraStatus.textContent = 'Error';
+            cameraStatus.style.background = '#b91c1c';
+          }
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
     }
 
     function stopCamera() {
