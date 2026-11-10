@@ -1,0 +1,343 @@
+[
+  {
+    "id": "tab_tie_detection",
+    "type": "tab",
+    "label": "Pipeline Inspección Corbata",
+    "disabled": false,
+    "info": "Flujo de orquestación de eventos de inspección visual de corbata recibidos desde FastAPI"
+  },
+  {
+    "id": "ui_tab_main",
+    "type": "ui_tab",
+    "name": "Control de Etiqueta",
+    "icon": "dashboard",
+    "order": 1,
+    "disabled": false,
+    "hidden": false
+  },
+  {
+    "id": "ui_group_status",
+    "type": "ui_group",
+    "name": "Estado de Inspección en Tiempo Real",
+    "tab": "ui_tab_main",
+    "order": 1,
+    "disp": true,
+    "width": "6",
+    "collapse": false
+  },
+  {
+    "id": "ui_group_telemetry",
+    "type": "ui_group",
+    "name": "Telemetría de Red y Rendimiento (LAN)",
+    "tab": "ui_tab_main",
+    "order": 2,
+    "disp": true,
+    "width": "6",
+    "collapse": false
+  },
+  {
+    "id": "ui_base_config",
+    "type": "ui_base",
+    "theme": {
+      "name": "theme-dark",
+      "lightTheme": {
+        "default": "#0094CE",
+        "baseColor": "#0094CE",
+        "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+        "edited": true,
+        "reset": false
+      },
+      "darkTheme": {
+        "default": "#097479",
+        "baseColor": "#1e293b",
+        "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif",
+        "edited": true,
+        "reset": false
+      },
+      "customTheme": {
+        "name": "Untitled Theme 1",
+        "default": "#4B7930",
+        "baseColor": "#4B7930",
+        "baseFont": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+      },
+      "themeState": {
+        "base-color": {
+          "default": "#097479",
+          "value": "#1e293b",
+          "edited": true
+        },
+        "page-titlebar-backgroundColor": {
+          "value": "#0f172a",
+          "edited": false
+        },
+        "page-backgroundColor": {
+          "value": "#0f172a",
+          "edited": false
+        },
+        "page-sidebar-backgroundColor": {
+          "value": "#0f172a",
+          "edited": false
+        },
+        "group-textColor": {
+          "value": "#38bdf8",
+          "edited": false
+        },
+        "group-borderColor": {
+          "value": "#334155",
+          "edited": false
+        },
+        "group-backgroundColor": {
+          "value": "#1e293b",
+          "edited": false
+        },
+        "widget-textColor": {
+          "value": "#f8fafc",
+          "edited": false
+        },
+        "widget-backgroundColor": {
+          "value": "#0284c7",
+          "edited": false
+        },
+        "widget-borderColor": {
+          "value": "#334155",
+          "edited": false
+        },
+        "base-font": {
+          "value": "-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Oxygen-Sans,Ubuntu,Cantarell,Helvetica Neue,sans-serif"
+        }
+      },
+      "angularTheme": {
+        "primary": "indigo",
+        "accents": "blue",
+        "warn": "red",
+        "background": "grey",
+        "palette": "light"
+      }
+    },
+    "site": {
+      "name": "Control de Etiqueta - Node-RED",
+      "hideToolbar": "false",
+      "allowSwipe": "false",
+      "lockMenu": "false",
+      "allowTempTheme": "true",
+      "dateFormat": "DD/MM/YYYY",
+      "sizes": {
+        "sx": 48,
+        "sy": 48,
+        "gx": 6,
+        "gy": 6,
+        "cx": 6,
+        "cy": 6,
+        "px": 0,
+        "py": 0
+      }
+    }
+  },
+  {
+    "id": "http_in_inference",
+    "type": "http in",
+    "z": "tab_tie_detection",
+    "name": "POST /inference-result",
+    "url": "/inference-result",
+    "method": "post",
+    "upload": false,
+    "swaggerDoc": "",
+    "x": 160,
+    "y": 140,
+    "wires": [
+      [
+        "http_resp_ok",
+        "fn_parse_payload",
+        "debug_log"
+      ]
+    ]
+  },
+  {
+    "id": "http_resp_ok",
+    "type": "http response",
+    "z": "tab_tie_detection",
+    "name": "200 OK",
+    "statusCode": "200",
+    "headers": {
+      "content-type": "application/json"
+    },
+    "x": 420,
+    "y": 80,
+    "wires": []
+  },
+  {
+    "id": "debug_log",
+    "type": "debug",
+    "z": "tab_tie_detection",
+    "name": "Log Webhook Inferencia",
+    "active": false,
+    "tosidebar": true,
+    "console": false,
+    "tostatus": false,
+    "complete": "payload",
+    "targetType": "msg",
+    "statusVal": "",
+    "statusType": "auto",
+    "x": 470,
+    "y": 140,
+    "wires": []
+  },
+  {
+    "id": "fn_parse_payload",
+    "type": "function",
+    "z": "tab_tie_detection",
+    "name": "Descomponer Métricas",
+    "func": "const p = msg.payload || {};\n\n// Mensaje para el estado visual\nconst msgStatus = {\n    payload: {\n        status: p.status || 'SIN CORBATA',\n        confidence: p.confidence || 0.0,\n        has_tie: p.has_tie || false,\n        model_used: p.model_used || 'N/A'\n    }\n};\n\n// Mensaje para indicador de latencia\nconst msgLatency = {\n    payload: Math.round(p.transit_latency_ms || 0)\n};\n\n// Mensaje para FPS\nconst msgFps = {\n    payload: p.fps || 0\n};\n\n// Mensaje para Throughput\nconst msgThroughput = {\n    payload: Math.round(p.throughput_kbps || 0)\n};\n\nreturn [msgStatus, msgLatency, msgFps, msgThroughput];",
+    "outputs": 4,
+    "timeout": 0,
+    "noerr": 0,
+    "initialize": "",
+    "finalize": "",
+    "libs": [],
+    "x": 450,
+    "y": 240,
+    "wires": [
+      [
+        "ui_alert_template"
+      ],
+      [
+        "ui_latency_gauge",
+        "ui_latency_chart"
+      ],
+      [
+        "ui_fps_text"
+      ],
+      [
+        "ui_throughput_text"
+      ]
+    ]
+  },
+  {
+    "id": "ui_alert_template",
+    "type": "ui_template",
+    "z": "tab_tie_detection",
+    "group": "ui_group_status",
+    "name": "Badge Alerta Visual",
+    "order": 1,
+    "width": "6",
+    "height": "4",
+    "format": "<div style=\"padding: 1.5rem; border-radius: 12px; text-align: center; font-weight: bold; font-family: sans-serif; transition: all 0.3s ease;\"\n     ng-style=\"{\n       'background': msg.payload.has_tie ? 'rgba(34, 197, 94, 0.2)' : 'rgba(239, 68, 68, 0.2)',\n       'border': msg.payload.has_tie ? '3px solid #22c55e' : '3px solid #ef4444',\n       'color': msg.payload.has_tie ? '#4ade80' : '#f87171'\n     }\">\n  <div style=\"font-size: 2rem; margin-bottom: 0.5rem;\">\n    {{ msg.payload.has_tie ? '🟢 CON CORBATA' : '🔴 SIN CORBATA' }}\n  </div>\n  <div style=\"font-size: 1.1rem; color: #cbd5e1;\">\n    Confianza: {{ (msg.payload.confidence * 100) | number:0 }}%\n  </div>\n  <div style=\"font-size: 0.85rem; color: #94a3b8; margin-top: 0.5rem;\">\n    Motor: {{ msg.payload.model_used }}\n  </div>\n</div>",
+    "storeOutMessages": true,
+    "fwdInMessages": true,
+    "resendOnRefresh": true,
+    "templateScope": "local",
+    "className": "",
+    "x": 740,
+    "y": 180,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "ui_latency_gauge",
+    "type": "ui_gauge",
+    "z": "tab_tie_detection",
+    "name": "Gauge Latencia (ms)",
+    "group": "ui_group_telemetry",
+    "order": 1,
+    "width": "6",
+    "height": "4",
+    "gtype": "gage",
+    "title": "Latencia LAN (ms)",
+    "label": "ms",
+    "format": "{{value}}",
+    "min": 0,
+    "max": 200,
+    "colors": [
+      "#22c55e",
+      "#f59e0b",
+      "#ef4444"
+    ],
+    "seg1": "50",
+    "seg2": "100",
+    "diff": false,
+    "className": "",
+    "x": 740,
+    "y": 240,
+    "wires": []
+  },
+  {
+    "id": "ui_latency_chart",
+    "type": "ui_chart",
+    "z": "tab_tie_detection",
+    "name": "Historial Latencia",
+    "group": "ui_group_telemetry",
+    "order": 2,
+    "width": "6",
+    "height": "4",
+    "label": "Latencia en el Tiempo (ms)",
+    "chartType": "line",
+    "legend": "false",
+    "xformat": "HH:mm:ss",
+    "interpolate": "linear",
+    "nodata": "Esperando paquetes de streaming...",
+    "dot": false,
+    "ymin": "0",
+    "ymax": "150",
+    "removeOlder": "1",
+    "removeOlderPoints": "",
+    "removeOlderUnit": "60",
+    "cutout": 0,
+    "useOneColor": false,
+    "useUTC": false,
+    "colors": [
+      "#38bdf8",
+      "#aec7e8",
+      "#ff7f0e",
+      "#2ca02c",
+      "#98df8a",
+      "#d62728",
+      "#ff9896",
+      "#9467bd",
+      "#c5b0d5"
+    ],
+    "outputs": 1,
+    "useDifferentColor": false,
+    "className": "",
+    "x": 730,
+    "y": 300,
+    "wires": [
+      []
+    ]
+  },
+  {
+    "id": "ui_fps_text",
+    "type": "ui_text",
+    "z": "tab_tie_detection",
+    "group": "ui_group_telemetry",
+    "order": 3,
+    "width": "3",
+    "height": "2",
+    "name": "FPS Ingesta",
+    "label": "Tasa de Cuadros:",
+    "format": "{{msg.payload}} FPS",
+    "layout": "row-spread",
+    "className": "",
+    "x": 710,
+    "y": 360,
+    "wires": []
+  },
+  {
+    "id": "ui_throughput_text",
+    "type": "ui_text",
+    "z": "tab_tie_detection",
+    "group": "ui_group_telemetry",
+    "order": 4,
+    "width": "3",
+    "height": "2",
+    "name": "Throughput",
+    "label": "Ancho de Banda:",
+    "format": "{{msg.payload}} KB/s",
+    "layout": "row-spread",
+    "className": "",
+    "x": 710,
+    "y": 420,
+    "wires": []
+  }
+]
+

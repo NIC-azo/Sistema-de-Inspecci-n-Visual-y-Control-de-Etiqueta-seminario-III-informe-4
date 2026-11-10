@@ -1,0 +1,61 @@
+# Python artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+env/
+venv/
+.venv/
+ENV/
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+.pytest_cache/
+
+# IDE & Editor files
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker runtime & logs
+.docker/
+*.log
+
+# Variables de entorno sensibles (Se entregan empaquetadas en ZIP)
+.env
+backend/.env
+
+# Dataset local (se preservan marcadores de estructura)
+backend/ml/dataset/con_corbata/*
+backend/ml/dataset/sin_corbata/*
+!backend/ml/dataset/.gitkeep
+!backend/ml/dataset/**/sample_*
+
+# Artefactos y Pesos de Modelos Entrenados (REQUERIDO EN REPO: .pt y .pkl incluidos)
+backend/ml/models/*
+!backend/ml/models/.gitkeep
+!backend/ml/models/*.pkl
+!backend/ml/models/*.pt
+
+# Node-RED: Flujo exportado y configuración requerida
+node-red-data/*
+!node-red-data/flows.json
+!node-red-data/package.json
+!node-red-data/.gitkeep
+node-red-data/node_modules/
+node-red-data/.config.json*
+node-red-data/.sessions.json*

@@ -1,0 +1,8 @@
+{
+  "name": "tie-detection-nodered",
+  "description": "Orquestador de Alertas y Dashboard Visual para Detección de Corbata",
+  "version": "1.0.0",
+  "dependencies": {
+    "node-red-dashboard": "^3.6.6"
+  }
+}

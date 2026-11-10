@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema Local de Inspección Visual | Detección de Corbata</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --border: #334155;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+      --success: #22c55e;
+      --danger: #ef4444;
+      --primary: #3b82f6;
+      --warning: #f59e0b;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 1.5rem;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 1.5rem;
+    }
+
+    h1 { font-size: 1.5rem; font-weight: 700; color: #fff; }
+    .subtitle { font-size: 0.85rem; color: var(--text-muted); margin-top: 0.25rem; }
+
+    .nav-links a {
+      background: #2563eb;
+      color: #fff;
+      padding: 0.5rem 1rem;
+      border-radius: 6px;
+      text-decoration: none;
+      font-size: 0.85rem;
+      font-weight: 600;
+      transition: background 0.2s;
+    }
+    .nav-links a:hover { background: #1d4ed8; }
+
+    .grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (max-width: 900px) {
+      .grid { grid-template-columns: 1fr; }
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .video-container {
+      position: relative;
+      width: 100%;
+      background: #000;
+      border-radius: 8px;
+      overflow: hidden;
+      aspect-ratio: 4 / 3;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    video, img.preview-stream {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .status-badge {
+      padding: 1rem;
+      border-radius: 10px;
+      text-align: center;
+      font-size: 1.4rem;
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      margin-bottom: 1rem;
+      transition: background 0.2s, color 0.2s;
+    }
+
+    .status-con-corbata {
+      background: rgba(34, 197, 94, 0.15);
+      color: var(--success);
+      border: 2px solid var(--success);
+    }
+
+    .status-sin-corbata {
+      background: rgba(239, 68, 68, 0.15);
+      color: var(--danger);
+      border: 2px solid var(--danger);
+    }
+
+    .status-waiting {
+      background: rgba(148, 163, 184, 0.15);
+      color: var(--text-muted);
+      border: 2px solid var(--border);
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+    }
+
+    .metric-box {
+      background: #0f172a;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.75rem;
+    }
+
+    .metric-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; }
+    .metric-value { font-size: 1.25rem; font-weight: 700; margin-top: 0.2rem; }
+
+    .controls {
+      display: flex;
+      gap: 0.5rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+
+    button {
+      padding: 0.6rem 1rem;
+      border-radius: 6px;
+      border: none;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    button:hover { opacity: 0.9; }
+
+    .btn-primary { background: var(--primary); color: #fff; }
+    .btn-success { background: var(--success); color: #000; }
+    .btn-danger { background: var(--danger); color: #fff; }
+    .btn-outline { background: transparent; border: 1px solid var(--border); color: #fff; }
+
+    .pill {
+      font-size: 0.75rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 9999px;
+      background: var(--border);
+      color: var(--text-muted);
+    }
+
+    .notice {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      border-radius: 6px;
+      font-size: 0.8rem;
+      background: rgba(59, 130, 246, 0.1);
+      border-left: 3px solid var(--primary);
+      color: #93c5fd;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div>
+      <h1>Sistema de Inspección Visual y Control de Etiqueta</h1>
+      <div class="subtitle">Arquitectura Local On-Premise | Filtro Ético Facial | Detección de Corbata</div>
+    </div>
+    <div class="nav-links">
+      <a id="linkNodeRed" href="#" target="_blank">Abrir Dashboard Node-RED</a>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- Columna 1: Captura y Cámara Local -->
+    <div class="card">
+      <div class="card-title">
+        <span>Cámara en Vivo (Dispositivo LAN)</span>
+        <span class="pill" id="cameraStatus">Inactiva</span>
+      </div>
+
+      <div class="video-container">
+        <video id="webcamVideo" autoplay playsinline muted style="display: none;"></video>
+        <img id="processedStream" class="preview-stream" alt="Stream Procesado con Filtro de Privacidad">
+        <canvas id="captureCanvas" style="display: none;"></canvas>
+      </div>
+
+      <div class="controls">
+        <button id="btnStart" class="btn-primary" onclick="startCamera()">Iniciar Cámara</button>
+        <button id="btnStop" class="btn-outline" onclick="stopCamera()" disabled>Detener</button>
+        <button class="btn-outline" onclick="switchCamera()">Cambiar Cámara</button>
+      </div>
+
+      <div class="notice">
+        <strong>Privacidad por Diseño (MediaPipe):</strong> El rostro del operador es detectado y difuminado en memoria de manera irreversible antes de la inferencia. Ningún fotograma sin anonimizar es persistido.
+      </div>
+    </div>
+
+    <!-- Columna 2: Estado de Control de Etiqueta y Métricas -->
+    <div class="card">
+      <div class="card-title">
+        <span>Estado de Inspección</span>
+        <span class="pill">Modelo: {{ model_type | upper }}</span>
+      </div>
+
+      <div id="statusBadge" class="status-badge status-waiting">
+        ESPERANDO CUADROS...
+      </div>
+
+      <div class="metrics-grid">
+        <div class="metric-box">
+          <div class="metric-label">Latencia de Tránsito (LAN)</div>
+          <div class="metric-value" id="valLatency">-- ms</div>
+        </div>
+
+        <div class="metric-box">
+          <div class="metric-label">Tiempo de Inferencia</div>
+          <div class="metric-value" id="valInference">-- ms</div>
+        </div>
+
+        <div class="metric-box">
+          <div class="metric-label">Confianza del Modelo</div>
+          <div class="metric-value" id="valConfidence">-- %</div>
+        </div>
+
+        <div class="metric-box">
+          <div class="metric-label">Throughput / FPS</div>
+          <div class="metric-value" id="valThroughput">-- KB/s (0 fps)</div>
+        </div>
+      </div>
+
+      <div class="card-title" style="margin-top: 1rem;">
+        <span>Recolección para Dataset Local (AutoML)</span>
+      </div>
+
+      <div class="controls">
+        <button class="btn-success" onclick="captureSample('con_corbata')">📸 Guardar [CON CORBATA]</button>
+        <button class="btn-danger" onclick="captureSample('sin_corbata')">📸 Guardar [SIN CORBATA]</button>
+      </div>
+      <div id="captureFeedback" style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0.5rem;"></div>
+    </div>
+  </div>
+
+  <script>
+    let localStream = null;
+    let ws = null;
+    let isStreaming = false;
+    let isProcessingFrame = false;
+    let lastSendTimestamp = 0;
+    let currentFacingMode = 'user';
+
+    const video = document.getElementById('webcamVideo');
+    const processedImg = document.getElementById('processedStream');
+    const canvas = document.getElementById('captureCanvas');
+    const ctx = canvas.getContext('2d');
+
+    const badge = document.getElementById('statusBadge');
+    const valLatency = document.getElementById('valLatency');
+    const valInference = document.getElementById('valInference');
+    const valConfidence = document.getElementById('valConfidence');
+    const valThroughput = document.getElementById('valThroughput');
+    const cameraStatus = document.getElementById('cameraStatus');
+    const feedback = document.getElementById('captureFeedback');
+    const linkNodeRed = document.getElementById('linkNodeRed');
+    if (linkNodeRed) {
+      linkNodeRed.href = `http://${window.location.hostname}:1880/ui`;
+    }
+
+    function connectWebSocket() {
+      const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+      const wsUrl = `${protocol}//${window.location.host}/ws/stream`;
+      ws = new WebSocket(wsUrl);
+
+      ws.onopen = () => {
+        cameraStatus.textContent = 'Conectado a Inferencia';
+        cameraStatus.style.background = '#15803d';
+        isProcessingFrame = false;
+      };
+
+      ws.onmessage = (event) => {
+        isProcessingFrame = false; // El servidor ya respondió, listo para el siguiente cuadro fresco
+        const trueTransitMs = Math.max(1, Math.round(performance.now() - lastSendTimestamp));
+        const data = JSON.parse(event.data);
+        updateDashboard(data, trueTransitMs);
+      };
+
+      ws.onclose = () => {
+        cameraStatus.textContent = 'Desconectado';
+        cameraStatus.style.background = '#b91c1c';
+        isProcessingFrame = false;
+        if (isStreaming) {
+          setTimeout(connectWebSocket, 1500);
+        }
+      };
+    }
+
+    async function startCamera() {
+      try {
+        localStream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: currentFacingMode,
+            width: { ideal: 480 },
+            height: { ideal: 360 }
+          },
+          audio: false
+        });
+
+        video.srcObject = localStream;
+        await video.play();
+
+        // Resolución optimizada para streaming LAN sin saturar CPU ni red
+        canvas.width = 480;
+        canvas.height = 360;
+
+        isStreaming = true;
+        isProcessingFrame = false;
+        document.getElementById('btnStart').disabled = true;
+        document.getElementById('btnStop').disabled = false;
+
+        connectWebSocket();
+        streamLoop();
+      } catch (err) {
+        alert("Error accediendo a la cámara: " + err.message);
+      }
+    }
+
+    function stopCamera() {
+      isStreaming = false;
+      isProcessingFrame = false;
+      if (localStream) {
+        localStream.getTracks().forEach(t => t.stop());
+      }
+      if (ws) ws.close();
+      document.getElementById('btnStart').disabled = false;
+      document.getElementById('btnStop').disabled = true;
+      cameraStatus.textContent = 'Inactiva';
+      cameraStatus.style.background = 'var(--border)';
+    }
+
+    function switchCamera() {
+      currentFacingMode = (currentFacingMode === 'user') ? 'environment' : 'user';
+      if (isStreaming) {
+        stopCamera();
+        startCamera();
+      }
+    }
+
+    function streamLoop() {
+      if (!isStreaming) return;
+
+      // Watchdog: si el cuadro anterior tardó más de 350 ms, resetear para no congelar
+      if (isProcessingFrame && (performance.now() - lastSendTimestamp > 350)) {
+        isProcessingFrame = false;
+      }
+
+      // Control de flujo (Backpressure): Solo enviar si el servidor ya procesó el anterior
+      // y no hay datos pendientes en el buffer del socket
+      if (!isProcessingFrame && ws && ws.readyState === WebSocket.OPEN && video.videoWidth > 0 && ws.bufferedAmount === 0) {
+        isProcessingFrame = true;
+        lastSendTimestamp = performance.now();
+
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const base64Data = canvas.toDataURL('image/jpeg', 0.55);
+        const clientTimestamp = Date.now();
+
+        ws.send(JSON.stringify({
+          image: base64Data,
+          client_timestamp: clientTimestamp
+        }));
+      }
+
+      // Bucle adaptativo de alta frecuencia con rAF para sincronización perfecta
+      requestAnimationFrame(streamLoop);
+    }
+
+    function updateDashboard(data, trueTransitMs) {
+      if (data.status === "CON CORBATA") {
+        badge.className = "status-badge status-con-corbata";
+        badge.textContent = `🟢 CON CORBATA (${Math.round(data.confidence * 100)}%)`;
+      } else if (data.status === "SIN CORBATA") {
+        badge.className = "status-badge status-sin-corbata";
+        badge.textContent = `🔴 SIN CORBATA (${Math.round(data.confidence * 100)}%)`;
+      }
+
+      const displayLatency = (trueTransitMs !== undefined) ? trueTransitMs : Math.round(data.transit_latency_ms);
+      valLatency.textContent = `${displayLatency} ms`;
+      valInference.textContent = `${data.inference_time_ms} ms`;
+      valConfidence.textContent = `${Math.round(data.confidence * 100)} %`;
+
+      if (data.network_metrics) {
+        valThroughput.textContent = `${data.network_metrics.throughput_kbps} KB/s (${data.network_metrics.fps} fps)`;
+      }
+
+      if (data.preview_base64) {
+        processedImg.src = `data:image/jpeg;base64,${data.preview_base64}`;
+      }
+    }
+
+    async function captureSample(label) {
+      if (!video.videoWidth) {
+        alert("Inicia la cámara primero.");
+        return;
+      }
+      ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+      const base64Data = canvas.toDataURL('image/jpeg', 0.85);
+
+      try {
+        const res = await fetch('/api/dataset/capture', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ image: base64Data, label: label })
+        });
+        const out = await res.json();
+        if (out.saved) {
+          feedback.textContent = `Muestra guardada: [${label}] (Total recolectadas: ${out.total_samples})`;
+          feedback.style.color = '#22c55e';
+        }
+      } catch (e) {
+        feedback.textContent = "Error guardando muestra: " + e.message;
+        feedback.style.color = '#ef4444';
+      }
+    }
+  </script>
+</body>
+</html>
+
